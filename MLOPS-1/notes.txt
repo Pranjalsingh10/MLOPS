@@ -1,0 +1,117 @@
+Phase-1: Buils foundation for MLOps
+
+Step-1: Create virtual environment
+python -m venv kiet-cse
+
+Step-2: Activate virtual environment
+In Mac:
+source kiet-cse/bin/activate
+
+Step-3; Create project structure
+mkdir mlops-first-pipeline
+cd mlops-first-pipeline
+
+Step-4: Install required packages
+pip install -r requirements.txt
+
+Step-5: Train and ave the model
+python train.py
+
+Step-6: Create and start the FastAPI
+uvicorn main:app --reload
+pyhton -m uvicorn main:app --reload
+
+For API testig use this data
+{
+	"sepal_length": 5.1,
+    "sepal_width": 3.5,
+    "petal_length":1.6,
+    "petal_width": 0.5
+}
+
+===================================
+Phase-2: Dockerize ML applications
+===================================
+
+Traditional ML Flow:
+Datase
+Production ready ML application
+Saved model -> Python App -> REST API -> Automated Test -> Docker Container -> CI/CD
+Can be tested, deployed, accessed by clients and maintained consistently
+
+File data type only supports "string"
+
+Why we need Docker?
+- Imagine rightnow ML application is working on your macbook , but fails on anither 
+engineer laptop that runs it on a Linux/Windows server
+
+Possible reasons of failure:
+- Different Python versions
+- Differnet versions of scikit-learn or FastAPI
+- Missing Python packages
+- Different OS dependencies
+
+Docekr helps package your application code, runtime, dependencies, and startup
+instructions into a standordized image
+
+4 Major requirements:
+- Dockerfile - Instructions for packaging the ML application 
+- Image - packaged reusable applicaiton artifact
+- Container - Running instance of the image
+- Port mapping - Makes the API inside the container accessible form your system
+
+Commands for Docker:
+1. docker ps = print all running containers
+2. docker ps -a = print all containers (running and stopped)
+3. docker build -t cse-mlops . 
+= build docker image
+= -t = tag = name of the image
+4. docekr images = List locally available docker images
+5. Start the container:
+docker run -d --name iris-ml-api -p 8000:8000 cse-mlops
+
+===========================================
+Phase-3: Automated Testingof ML Application
+===========================================
+
+What;s our goal?
+Developer pushes code to Github
+Github actions start the workflow
+Triggered by a push or oull request
+
+Run tests:
+Validate model API behavior
+Build image
+Verify Docekr imaging
+
+What is CI/CD?
+CI - Continous Integration: Automatically validates code changes through testsand build cheks
+CD - Continous Delivery: Keeps changes ready for release, with production release
+potentially requiring approval
+CD - Continuos Deployment: Automatically releases changes to production when all 
+required check pass
+
+Automated Testing
+- Automated testing catches issues before a 
+-Pytest + FAstAPI Test Client + Github actions
+
+Update the projetc structure
+-mlops-first-pipeline
+---tests
+---------test_api.py
+---.github
+---------workflows
+---------------ci.yml
+
+Now install two new packages:
+-httpx: FastAPI Test CLient uses HTTPx to simulater http request to your applicaiton
+-pytest: it discovers and runs automated tests, report failures and returns 
+non-zero exit status when test fails
+
+pip install httpx pytest
+
+RUN TEST locally
+python -m pytest -v
+
+
+CREATE THE GITHUB ACTIONS workflow
