@@ -1,50 +1,70 @@
+# Name displayed in the GitHub Actions tab
 name: Iris ML API - CI Pipeline - CSE
 
-# Define when GitHub should run this workflow
+# Define when GitHub Actions should run this workflow
 on:
-  # Run CI whenever code is pushed to main branch
+  # Run CI whenever code is pushed to the main branch
   push:
     branches:
       - main
 
+  # Run CI whenever a pull request targets the main branch
   pull_request:
     branches:
       - main
 
-# Permissions are restricted to reading repository content
+  # Allow manually triggering the workflow from GitHub's Actions tab
+  workflow_dispatch:
+
+# Restrict the workflow's repository permissions
 permissions:
   contents: read
 
 jobs:
+  # Define a job that tests the application and builds its Docker image
   test-and-build:
-    # GitHub provides a fresh Ubuntu virtual environment
+
+    # GitHub provides a fresh Ubuntu virtual machine for this job
     runs-on: ubuntu-latest
 
+    # Run shell commands from the MLOPS-1 project directory
+    # This is necessary because the application files are inside MLOPS-1/
+    defaults:
+      run:
+        working-directory: MLOPS-1
+
     steps:
-      # Step 1: Download repository content
+      # Step 1: Download the repository contents onto the GitHub runner
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Step 2: Install Python
-      - name: Setup Python
+      # Step 2: Install the specified Python version
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: "3.11"
 
-      # Step 3: Install Python dependencies
+          # Cache pip packages to speed up future workflow runs
+          cache: pip
+
+          # Specify where the dependency file is located
+          cache-dependency-path: MLOPS-1/requirements.txt
+
+      # Step 3: Install the project's Python dependencies
       - name: Install Python dependencies
         run: |
+          # Upgrade pip to a recent version
           python -m pip install --upgrade pip
+
+          # Install dependencies required by the application
           pip install -r requirements.txt
 
-      # Step 4: Run automated tests
-      - name: Run tests
-        run: |
-          python -m pytest
-      # Step 5: Build Docker image
-      - name: Build Docker image
-        run: |
-            docker build -t iris-ml-api:#{{ github.sha }} .  
-     # Build Docker image with the current commit SHA as the tag
+      # Step 4: Execute the automated tests inside the test directory
+      - name: Run automated tests
+        run: python -m pytest -v test/
 
-     
+      # Step 5: Build a Docker image from the project's Dockerfile
+      - name: Build Docker image
+        run: docker build -t iris-ml-api:${{ github.sha }} .
+        # Tag the image with the current commit SHA for traceability.
+        # The final dot means the build context is the MLOPS-1 directory.
